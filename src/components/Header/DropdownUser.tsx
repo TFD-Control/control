@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { useAuthenticator, Authenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession, getCurrentUser, fetchUserAttributes, FetchUserAttributesOutput } from '@aws-amplify/auth';
 
 import UserOne from '../../images/user/user-01.png';
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [logoutRedirect, setLogoutRedirect] = useState(false);
 
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
@@ -39,7 +40,15 @@ const DropdownUser = () => {
   });
 
   //const { signOut } = useAuthenticator();
-  const { signOut } = useAuthenticator((context) => [context.user]);
+  const { user, signOut } = useAuthenticator((context) => [context.user]);
+  async function handleSignOut() {
+    try {
+      signOut();
+      setLogoutRedirect(true); // Activer la redirection après la déconnexion
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   interface CustomUserAttributes extends FetchUserAttributesOutput {
     customAttribute?: string;
@@ -68,6 +77,7 @@ const DropdownUser = () => {
 
   return (
     <div className="relative">
+      {logoutRedirect && <Navigate to="/auth/signIn" />}
       <Link
         ref={trigger}
         onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -164,11 +174,12 @@ const DropdownUser = () => {
               Account Settings
             </Link>
           </li>
-          <li>
-          <button onClick={handleFetchUserAtttributes}>Fetch User Attributes</button>
-          </li>
+          
+          {/* <li><button onClick={handleFetchUserAtttributes}>Fetch User Attributes</button></li> */}
+        
         </ul>
-        <button onClick={() => signOut()} className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
+        
+        <button onClick={handleSignOut} className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
           <svg
             className="fill-current"
             width="22"
